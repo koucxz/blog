@@ -1,4 +1,4 @@
-# ES6初探（待更新）  
+# ES6初探  
 转载自阮一峰老师的[ES6入门](http://es6.ruanyifeng.com)，稍有修改  
 ## let,const与var的比较  
 
