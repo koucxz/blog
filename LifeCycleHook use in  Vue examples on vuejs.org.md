@@ -1,0 +1,188 @@
+# Vue 官方示例中的生命周期钩子运用  
+Vue 框架的入口就是 Vue 实例，其实就是框架中的 view model ，它包含页面中的业务
+处理逻辑、数据模型等，它的生命周期中有多个事件钩子，让我们在控制整个Vue实例的
+过程时更容易形成好的逻辑。  
+## Vue 实例  
+在文档中经常会使用 vm 这个变量名表示 Vue 实例，在实例化 Vue 时，需要传入一个选
+项对象，它可以包含数据(data)、模板(template)、挂载元素(el)、方法(methods)、生
+命周期钩子(lifecyclehook)等选项。  
+### Vue 实例化的选项  
+需要注意的是含 this 的函数大多不要使用箭头函数，因为我们期望 this 指向 Vue 实例。  
+### data  
+Vue 实例的数据都保存在 data 对象中，Vue 将会递归将 data 的属性转换为 getter/setter，
+从而让 data 的属性能够响应数据变化。  
+
+    var data = { a: 1 }
+    // 直接创建一个实例
+    var vm = new Vue({
+      data: data
+    })
+    vm.a // -> 1
+    vm.$data === data // -> true
+
+这样数据就绑定在 HTML 中，Vue 框架监视 data 的数据变化，自动更新 HTML 内容。  
+### computed  
+> 计算属性将被混入到 Vue 实例中。所有 getter 和 setter 的 this 上下文自动地绑定为 Vue 
+实例。[官方API][1]
+
+    var vm = new Vue({
+      data: { a: 1 },
+      computed: {
+        // 仅读取，值只须为函数
+        aDouble: function () {
+          return this.a * 2
+        },
+        // 读取和设置
+        aPlus: {
+          get: function () {
+            return this.a + 1
+          },
+          set: function (v) {
+            this.a = v - 1
+          }
+        }
+      }
+    })
+    vm.aPlus   // -> 2
+    vm.aPlus = 3
+    vm.a       // -> 2
+    vm.aDouble // -> 4
+    
+这里可以省略setter,如果省略了setter，那么值就可以是普通函数，但是必须有返回值。  
+### methods  
+> methods 将被混入到 Vue 实例中。可以直接通过 VM 实例访问这些方法，或者在指令表达
+式中使用。方法中的 this 自动绑定为 Vue 实例。[官方API][1]
+
+    var vm = new Vue({
+      data: { a: 1 },
+      methods: {
+        plus: function () {
+          this.a++
+        }
+      }
+    })
+    vm.plus()
+    vm.a // 2
+
+
+看下面这个例子，methods 和 computed 看起来可以做同样的事情，单纯看结果两种方式确实是相同的。
+然而，不同的是**计算属性是基于它们的依赖进行缓存的**。计算属性只有在它的相关依赖发生改变
+时才会重新求值。这就意味着只要 message 还没有发生改变，多次访问 reversedMessage 计算属性会
+立即返回之前的计算结果，而不必再次执行函数。相比而言，只要发生重新渲染，method 调用总会执行
+该函数。
+
+    var vm = new Vue({
+      el: '#example',
+      data: {
+        message: 'Hello'
+      },
+      computed: {
+        // a computed getter
+        reversedMessage: function () {
+          // `this` points to the vm instance
+          return this.message.split('').reverse().join('')
+        }
+      }
+    })
+
+### watch  
+>一个对象，键是需要观察的表达式，值是对应回调函数。值也可以是方法名，或者包含选项的对象。Vue 
+实例将会在实例化时调用 $watch()，遍历 watch 对象的每一个属性。
+
+    var vm = new Vue({
+      data: {
+        a: 1,
+        b: 2,
+        c: 3
+      },
+      watch: {
+        // 监控a变量变化的时候，自动执行此函数
+        a: function (val, oldVal) {
+          console.log('new: %s, old: %s', val, oldVal)
+        },
+        // 深度 watcher
+        c: {
+          handler: function (val, oldVal) { /* ... */ },
+          deep: true
+        }
+      }
+    })
+    vm.a = 2 // -> new: 2, old: 1
+
+## Vue 实例的生命周期
+Vue 实例有一个完整的生命周期，也就是从开始创建、初始化数据、编译模板、挂载Dom→渲染、更新→渲染、卸载等一系列
+过程，我们称这是 Vue 的生命周期。通俗说就是 Vue 实例从创建到销毁的过程，就是生命周期。
+
+在Vue的整个生命周期中，它提供了一些[生命周期钩子][2]，给了我们执行自定义逻辑的机会。
+
+接下来我们用几个例子来看看生命周期钩子是怎么用的：
+
+完整的代码托管在 [codepen](codepen.io)
+
+HTML结构：  
+    <div id="app">
+      <p>{{ number }}</p>
+      <input type="text" name="btnSetNumber" v-model="number">
+    </div>
+    
+我们对 input 和 p 绑定了data 对象的 number 数据，Vue 实例构建如下：
+
+    var app = new Vue({         
+        el: '#app',               
+        data: {                   
+          number: 1
+        }
+    })
+    
+在实例中分别在每个生命周期钩子中 ```console.log('钩子名称',this.number)``` 我们发现，第一次页面加载时
+触发了 beforeCreate, created, beforeMount, mounted 这几个钩子，data 数据在 created 中可获取到。
+
+再去 ```console.log('mounted: ', document.getElementsByTagName('p')[0])``` ，DOM 渲染在 mounted 中已经
+完成。
+
+我们再试着去更改 input 输入框中的内容，可以看到输入框上方的数据同步发生改变，这就是数据绑定的效果，在更
+新数据时触发 beforeUpdate 和 updated 钩子，且在 beforeUpdate 触发时，数据已更新完毕。
+
+而 destroy 仅在调用`app.$destroy();`时触发，对 vue 实例进行销毁。销毁完成后，我们再重新改变 number 的值，vue 不再对此动作
+进行响应了。但是原先生成的dom元素还存在，可以这么理解，执行了destroy操作，后续就不再受vue控制了。
+
+### Vue.nextTick
+> 在下次 DOM 更新循环结束之后执行延迟回调。在修改数据之后立即使用这个方法，获取更新后的 DOM。[官方API][2]
+
+    Vue.nextTick(function () {
+      // DOM 更新了
+    })
+
+官方还提供了一种写法，```vm.$nextTick```，用 this 自动绑定到调用它的实例上
+
+    created() {
+        setTimeout(() => {
+              this.number = 100
+              this.$nextTick(() => {
+                console.log('nextTick', document.getElementsByTagName('p')[0])
+              })
+        },100)
+    }
+    
+>[什么时候需要用的Vue.nextTick()][3]    
+>1. 在 Vue 生命周期的 created() 钩子函数进行的 DOM 操作一定要放在 Vue.nextTick() 的回调函数中。原因是什么呢，原因是
+在 created() 钩子函数执行的时候 DOM 其实并未进行任何渲染，而此时进行 DOM 操作无异于徒劳，所以此处一定要将 DOM 操作
+的 js 代码放进 Vue.nextTick() 的回调函数中。与之对应的就是 mounted 钩子函数，因为该钩子函数执行时所有的 DOM 挂载和
+渲染都已完成，此时在该钩子函数中进行任何DOM操作都不会有问题 。   
+>2. 在数据变化后要执行的某个操作，而这个操作需要使用随数据改变而改变的 DOM 结构的时候，这个操作都应该放
+进 Vue.nextTick() 的回调函数中。  
+
+### 生命周期小结
+
+生命周期钩子的一些使用方法：
+
+beforecreate : 可以在这加个loading事件，在加载实例时触发  
+created : 初始化完成时的事件写在这里，如在这结束loading事件，异步请求也适宜在这里调用
+mounted : 挂载元素，获取到DOM节点
+updated : 如果对数据统一处理，在这里写上相应函数
+beforeDestroy : 可以做一个确认停止事件的确认框
+nextTick : 更新数据后立即操作dom
+
+[1]:(https://cn.vuejs.org/v2/api/#选项-数据) 
+[2]:(https://cn.vuejs.org/v2/api/#选项-生命周期钩子)
+[3]:(https://segmentfault.com/a/1190000008570874)
