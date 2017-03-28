@@ -81,29 +81,31 @@ Vue 的过渡系统是内置的，在元素从 DOM 中插入或移除时自动�
     
 实例中的方法：
 
-    //在下个tick执行等待图片加载完成后再
-    this.$nextTick(() => {
-      this.timer = setInterval(() => {
-        this.autoPlay()
-      },4000)
-    }),
+    created() {
+        //在DOM加载完成后，下个tick中开始轮播
+        this.$nextTick(() => {
+            this.timer = setInterval(() => {
+                this.autoPlay()
+            }, 4000)
+        })
+    },
     go() {
-      this.timer = setInterval(() => {
-        this.autoPlay()
-      },4000)
+        this.timer = setInterval(() => {
+            this.autoPlay()
+        }, 4000)
     },
     stop() {
-      clearInterval(this.timer)
-      this.timer = null
+        clearInterval(this.timer)
+        this.timer = null
     },
     change(index) {
-      this.currentIndex = index
+        this.currentIndex = index
     },
     autoPlay() {
-      this.currentIndex++
-      if (this.currentIndex > this.slideList.length - 1) {
-        this.currentIndex = 0
-      }
+        this.currentIndex++
+        if (this.currentIndex > this.slideList.length - 1) {
+            this.currentIndex = 0
+        }
     }
     
 DOM 中为每个轮播 li 元素绑定事件 ```@mouseenter="stop" @mouseleave="go"``` 事件,使轮播鼠标移入时停止，移出时再次开始。
